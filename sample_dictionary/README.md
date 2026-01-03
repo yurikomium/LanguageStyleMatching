@@ -2,6 +2,8 @@
 
 This directory contains a simplified LIWC dictionary for **demonstration and testing purposes** of the Language Style Matching (LSM) algorithm.
 
+For how dictionaries are used in this repository (examples, batch runners), see the top-level `README.md` and `README_ja.md`.
+
 ## Important Notice
 
 ⚠️ **This sample dictionary is NOT suitable for research purposes**

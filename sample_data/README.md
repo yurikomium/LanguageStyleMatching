@@ -2,6 +2,8 @@
 
 This directory contains sample dialogue data for demonstrating the Language Style Matching (LSM) algorithm.
 
+For end-to-end usage (installation, examples, testing), see the top-level `README.md` and `README_ja.md`.
+
 ## Data Format
 
 Each CSV file contains the following columns:

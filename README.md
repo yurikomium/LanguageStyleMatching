@@ -1,37 +1,203 @@
 # Language Style Matching for Japanese
 
-This repository implements Language Style Matching (LSM) and reciprocal Language Style Matching (rLSM) algorithms for Japanese text analysis.
+This repository implements **Language Style Matching (LSM)**, **reciprocal / directional LSM (rLSM)**, and **rolling-window rLSM (rw.rLSM)** for Japanese conversational text analysis.
+
+- Japanese README: `README_ja.md`
+- Minimal runnable examples: `examples/`
+- Sample data: `sample_data/`
+- Sample dictionary (demo only): `sample_dictionary/`
+
+For directory-specific details:
+
+- Examples (usage, data format, customization): `examples/README.md`
+- Sample data format / naming: `sample_data/README.md`
+- Sample dictionary notes / licensing: `sample_dictionary/README.md`
+
+## Project Overview
+
+- **Goal**: Quantify linguistic style coordination (mimicry) focusing on **function words** (style) rather than content words.
+- **What’s included**:
+  - **LSM**: Conversation-level style similarity (non-directional)
+  - **rLSM**: Turn-by-turn responsiveness to the previous speaker (directional)
+  - **rw.rLSM**: Rolling-window rLSM to smooth noisy short turns
+
+## Definitions (paper-aligned; see original papers for formulas)
+
+This README summarizes the paper-aligned intent. Please refer to the original papers for full mathematical definitions.
+
+### 1) LSM (Language Style Matching; conversation-level similarity)
+
+- **Definition**: Measures how similar two speakers’ **function-word category usage rates** are in a conversation.
+- **Unit of analysis**: Typically **conversation-level** (aggregate per speaker, then compare).
+- **Range**: Designed to be in **0–1** (higher = more matching).
+- **Property**: **Non-directional** (does not indicate “who matched whom”).
+
+### 2) rLSM (reciprocal / directional LSM; immediate-turn responsiveness)
+
+- **Definition**: Addresses the limitation of conversation-level LSM by measuring, turn-by-turn, **how much the responder matches the immediately preceding speaker**.
+- **Requirement**: Compute dictionary-based category rates **per turn**.
+- **Key property**: rLSM evaluates matching relative to **categories present in the previous turn** (i.e., “followable” categories).
+- **Missingness matters**: Turn-level zeros are frequent; treating zeros naively can inflate matching. Müller-Frommeyer et al. (2019) discusses cases where **zeros should be treated as missing** (e.g., 0–0 should not automatically imply perfect match).
+- **Aggregation**: Category-wise rLSM can be aggregated into **speaker-level** and **dyad-level** scores.
+
+### 3) rw.rLSM (rolling-window rLSM; smoothed responsiveness)
+
+- **Definition**: Rolling-window variant of rLSM to reduce variance from short turns and capture sustained responsiveness.
+- **Typical implementation (paper example)**:
+  - Merge adjacent same-speaker turns before computing dictionary features (reduce segmentation noise).
+  - Use an **8-utterance window** (previous 7 + current) per speaker to compute window-level rates and then rLSM.
+
+## Japanese implementation choices (category design + preprocessing)
+
+### A) Mapping LIWC function-word categories to Japanese (7 categories)
+
+Original English LIWC uses 9 function-word categories; for Japanese we use the following **7 categories** (default in this repo, based on J-LIWC-style categories):
+
+- `ppron` (personal pronouns)
+- `ipron` (indefinite pronouns)
+- `casepart` (case particles) — used as an analogue to English prepositions
+- `auxverb` (auxiliary verbs)
+- `adverb` (adverbs)
+- `conj` (conjunctions)
+- `negate` (negations)
+
+Rationale:
+
+- Articles / quantifiers are excluded due to weak functional correspondence in Japanese.
+- J-LIWC is used **only for category identification**, not for psychological interpretation.
+
+### B) Tokenization and dictionary matching (reproducibility assumptions)
+
+- We use **spaCy + GiNZA (`ja_ginza`)** and match dictionary entries on **lemmas**.
+- For rLSM / rw.rLSM processing, we include a fallback to **`ja_ginza_electra`** if `ja_ginza` is unavailable.
 
 ## Installation
 
-### Prerequisites
+### Option 1: Using Dev Container (Recommended)
+
+The easiest way to get started is using VS Code with Dev Containers. This provides a consistent, reproducible environment.
+
+**Prerequisites:**
+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop)
+- [Visual Studio Code](https://code.visualstudio.com/)
+- [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+
+**Setup:**
+
+1. Open this repository in VS Code
+2. Click "Reopen in Container" when prompted (or use Command Palette: "Dev Containers: Reopen in Container")
+3. Wait for the container to build (first time only, ~5-10 minutes)
+4. All dependencies are automatically installed!
+
+**Why Dev Container?**
+
+- ✅ **Consistent environment** across all platforms (Windows, macOS, Linux)
+- ✅ **No system pollution** - everything runs in an isolated container
+- ✅ **Pre-configured** - Python, spaCy, and all dependencies ready to use
+- ✅ **Tested and verified** - all 31 tests pass in this environment
+- ✅ **Easy cleanup** - simply delete the container when done
+
+**What's included:**
+
+- Python 3.10
+- All dependencies from `requirements.txt`
+- Git for version control
+- VS Code extensions (Python, Pylance, Black, Ruff)
+- pytest configured and ready to run
+
+**Verifying the setup:**
+Once inside the container, run tests to verify everything works:
+
+```bash
+pytest -v  # Should show 31 passed tests
+```
+
+**Troubleshooting:**
+
+- **Container build fails:** Ensure Docker Desktop is running and you have sufficient disk space (~2GB)
+- **Can't find Docker:** Make sure Docker Desktop is installed and running
+- **Build takes too long:** The first build compiles some packages (especially on ARM64/M1/M2 Macs), subsequent builds use cache and are much faster
+- **Permission errors:** The container runs as user `vscode` to avoid permission issues
+
+**Alternative: Using Docker CLI directly**
+If you prefer not to use VS Code, you can use Docker directly:
+
+```bash
+# Build the image
+docker build -f .devcontainer/Dockerfile -t lsm .
+
+# Run tests
+docker run --rm -v "$(pwd):/workspace" lsm pytest -v
+
+# Interactive shell
+docker run --rm -it -v "$(pwd):/workspace" lsm bash
+```
+
+### Option 2: Local Installation
+
+**Prerequisites:**
 
 - Python 3.8 or higher
 - pip (Python package installer)
 
-### Setup
+**Setup:**
 
 1. Clone this repository:
+
 ```bash
 git clone <repository-url>
 cd LanguageStyleMatching
 ```
 
 2. Create a virtual environment (recommended):
+
 ```bash
 python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
 3. Install dependencies:
+
 ```bash
 pip install -r requirements.txt
 ```
 
 This will install all required packages including:
+
 - pandas, numpy (data processing)
 - spacy, ja-ginza (Japanese NLP)
 - pytest, pytest-cov, pytest-mock (testing)
+
+## Usage
+
+### Quickstart (run minimal examples)
+
+```bash
+python examples/basic_lsm_example.py
+python examples/basic_rlsm_example.py
+```
+
+### Input data format (CSV)
+
+At minimum, a conversation CSV is expected to contain:
+
+- `speaker`: speaker ID (e.g., `female` / `male`, or `A` / `B`)
+- `text`: Japanese utterance text
+- `start`: (optional) start time in seconds (or similar)
+
+See `examples/README.md` for more details.
+
+### Batch runners (research use)
+
+For processing multiple conversation files and saving CSV outputs:
+
+- LSM:
+  - `python -m lsm.runner --dic <dic_path> --results <out_dir> --round 1 2`
+- rLSM:
+  - `python -m rlsm.runner --data <csv_dir> --dic <dic_path> --results <out_dir>`
+
+Use `--help` to see all options.
 
 ## Testing
 
@@ -59,6 +225,7 @@ pytest lsm/tests/test_core.py -v
 ### Test Coverage
 
 To generate a coverage report:
+
 ```bash
 pytest --cov=lsm --cov=rlsm --cov-report=html
 ```
@@ -66,10 +233,17 @@ pytest --cov=lsm --cov=rlsm --cov-report=html
 ### Expected Results
 
 All 31 tests should pass:
+
 - LSM core functionality tests
 - rLSM core functionality tests
 - Paper example validations (Müller-Frommeyer et al. 2019)
 - Worker and runner tests
+
+## Dictionary Notes
+
+- `sample_dictionary/sample_liwc.dic` is a **simplified demo dictionary** for examples.
+- For actual research, obtain a full Japanese LIWC-style dictionary (e.g., J-LIWC 2015) and replace the dictionary path (`--dic` or scripts).
+- See `sample_dictionary/README.md` for notes on dictionary handling.
 
 ## References
 

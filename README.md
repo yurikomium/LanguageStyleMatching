@@ -21,9 +21,29 @@ For directory-specific details:
   - **rLSM**: Turn-by-turn responsiveness to the previous speaker (directional)
   - **rw.rLSM**: Rolling-window rLSM to smooth noisy short turns
 
-## Definitions (paper-aligned; see original papers for formulas)
+## Definitions (conceptual summary; see original papers for formulas)
 
-This README summarizes the paper-aligned intent. Please refer to the original papers for full mathematical definitions.
+This README summarizes the intended interpretation and implementation scope. Please refer to the original papers for full mathematical definitions.
+
+## Validation & Scope (how we justify “paper-aligned”)
+
+We do **not** claim bit-for-bit equivalence to any external/official implementation. Instead, we make the implementation choices explicit and validate key behaviors with tests:
+
+- **rLSM core rules (Table 5-style missingness handling)**: see `rlsm/tests/test_core.py`
+- **Paper example checks (where applicable)**: see `rlsm/tests/test_core_paper_examples.py`
+- **rw.rLSM (rolling-window) behavior**: see `rlsm/tests/test_rw_core.py` and `rlsm/tests/test_rw_table5.py`
+
+To run the most relevant tests:
+
+```bash
+pytest rlsm/tests/test_core.py -v
+pytest rlsm/tests/test_core_paper_examples.py -v
+```
+
+Scope/limitations to keep in mind:
+
+- **Category mapping is language-specific** (we use a 7-category Japanese mapping; see below). This differs from the original English LIWC setup.
+- Results depend on **tokenization/lemmatization** (spaCy + GiNZA) and on the **dictionary** you provide.
 
 ### 1) LSM (Language Style Matching; conversation-level similarity)
 
@@ -169,6 +189,26 @@ This will install all required packages including:
 - spacy, ja-ginza (Japanese NLP)
 - pytest, pytest-cov, pytest-mock (testing)
 
+## Reproducibility (verified setup + lock file)
+
+### Verified environment (example)
+
+The following environment was used to verify the examples and test suite:
+
+- OS: macOS-26.1-arm64-arm-64bit
+- Python: 3.10.2
+- Key packages: pandas 2.3.3, numpy 2.2.6, spacy 3.8.11, ginza 5.2.0, ja-ginza 5.2.0, pytest 9.0.2
+- Tests: `pytest -q` → `31 passed`
+
+### Dependency lock file (optional but recommended)
+
+`requirements.txt` uses version ranges. For stricter reproducibility, this repository also provides `requirements.lock`
+(generated via `pip freeze` in a verified environment).
+
+```bash
+pip install -r requirements.lock
+```
+
 ## Usage
 
 ### Quickstart (run minimal examples)
@@ -244,6 +284,15 @@ All 31 tests should pass:
 - `sample_dictionary/sample_liwc.dic` is a **simplified demo dictionary** for examples.
 - For actual research, obtain a full Japanese LIWC-style dictionary (e.g., J-LIWC 2015) and replace the dictionary path (`--dic` or scripts).
 - See `sample_dictionary/README.md` for notes on dictionary handling.
+
+## Citation
+
+If you use this repository as part of academic work, you can cite the software metadata in:
+
+- `CITATION.cff`
+- `CITATION.bib`
+
+Note: This is an independent implementation and does not claim official equivalence to any external/official implementation.
 
 ## References
 

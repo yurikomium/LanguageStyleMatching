@@ -1,6 +1,6 @@
 ## Language Style Matching for Japanese（日本語版 README）
 
-このリポジトリは、日本語テキストに対して **Language Style Matching (LSM)**、**reciprocal / directional LSM (rLSM)**、および **rolling-window rLSM (rw.rLSM)** を計算するための実装です。PhD 選考用の「研究実装の再現可能な成果物」として、定義（論文準拠）・入出力仕様・実行手順・テスト手順を README で明文化します。
+このリポジトリは、日本語テキストに対して **Language Style Matching (LSM)**、**reciprocal / directional LSM (rLSM)**、および **rolling-window rLSM (rw.rLSM)** を計算するための実装です。PhD 選考用の「研究実装の再現可能な成果物」として、定義（原典参照）・実装仕様・入出力仕様・実行手順・テスト手順を README で明文化します。
 
 - **英語版 README**: `README.md`（本ファイルは日本語版）
 - **最小実行例**: `examples/`
@@ -49,9 +49,24 @@ pytest -v
 
 ---
 
-## 論文における定義（LSM / rLSM / rw.rLSM）
+## 原典に基づく定義の要約（LSM / rLSM / rw.rLSM）
 
-定義・数式の詳細は原典を参照してください。本実装は、原典の設計思想（特に rLSM の欠測処理）を日本語実装として再現できるようにしています。
+定義・数式の詳細は原典を参照してください。本リポジトリでは「原典の設計意図に沿う」ことを目標にしつつ、完全一致を断言するのではなく、**実装上の扱いを仕様として明記し、主要ルールをテストで検証できる形**にしています。
+
+### 検証の根拠（“paper-aligned”の言い方について）
+
+以下のテストにより、少なくとも主要な挙動をコードとして検証できる状態にしています（詳細は各テストファイルを参照）。
+
+- rLSM コア（0/欠測の扱い等の主要ルール）: `rlsm/tests/test_core.py`
+- 論文例の検証（該当範囲）: `rlsm/tests/test_core_paper_examples.py`
+- rw.rLSM（rolling-window）の挙動: `rlsm/tests/test_rw_core.py`, `rlsm/tests/test_rw_table5.py`
+
+該当テストだけを実行する場合:
+
+```bash
+pytest rlsm/tests/test_core.py -v
+pytest rlsm/tests/test_core_paper_examples.py -v
+```
 
 ### LSM（Language Style Matching：会話全体のスタイル一致）
 
@@ -206,6 +221,27 @@ pip install -r requirements.txt
 
 ---
 
+## 再現性（検証済み環境・lock ファイル）
+
+### 検証済み環境（例）
+
+以下の環境で examples の実行とテストの通過を確認しています。
+
+- OS: macOS-26.1-arm64-arm-64bit
+- Python: 3.10.2
+- 主要パッケージ: pandas 2.3.3, numpy 2.2.6, spacy 3.8.11, ginza 5.2.0, ja-ginza 5.2.0, pytest 9.0.2
+- テスト: `pytest -q` → `31 passed`
+
+### 依存関係の固定（推奨）
+
+`requirements.txt` はバージョン範囲（`>=`）で記載されています。より厳密に環境を再現したい場合は、`requirements.lock`（検証済み環境の `pip freeze` 由来）を利用してください。
+
+```bash
+pip install -r requirements.lock
+```
+
+---
+
 ## 使用方法とサンプルコード
 
 ### Quickstart（まず動くことを確認）
@@ -274,6 +310,17 @@ pytest --cov=lsm --cov=rlsm --cov-report=html
 - `sample_dictionary/sample_liwc.dic` はデモ用の簡易辞書です。
 - 実研究では、正式な辞書（例: J-LIWC 2015）を入手し、`--dic` やスクリプト内の辞書パスを差し替えてください。
 - 辞書の取り扱い・注意点は `sample_dictionary/README.md` を参照してください。
+
+---
+
+## 引用（Citation）
+
+本リポジトリを研究で利用する場合、ソフトウェアとしての引用情報は以下を利用できます。
+
+- `CITATION.cff`
+- `CITATION.bib`
+
+注意: 本実装は独立実装であり、外部の公式実装等との完全一致（公式同等性）を保証するものではありません。
 
 ---
 

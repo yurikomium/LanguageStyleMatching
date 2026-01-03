@@ -9,7 +9,7 @@ import pytest
 import lsm.runner as run_lsm
 
 def test_parse_args_defaults(monkeypatch):
-    monkeypatch.setattr(sys, "argv", ["prog"])
+    monkeypatch.setattr(sys, "argv", ["prog", "--dic", "dummy.dic"])
     args = run_lsm.parse_args()
     # 主要デフォルトの存在だけ確認（環境依存パスは正規化されるため厳密比較は避ける）
     assert args.round == [1, 2]

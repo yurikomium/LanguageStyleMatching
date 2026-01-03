@@ -17,7 +17,7 @@ from typing import List, Dict, Any, Optional
 import platform
 import multiprocessing as mp
 import pandas as pd
-from . import lsm_workers as mod
+from . import workers as mod
 
 # --- Prevent parallel x BLAS runaway (always first in parent process) ---
 os.environ.setdefault("OMP_NUM_THREADS", "1")
@@ -30,7 +30,7 @@ os.environ.setdefault("VECLIB_MAXIMUM_THREADS", "1")
 from utils import DataAnalyzer
 
 # Child process side processing
-from .lsm_workers import init_worker, process_file, process_file_temporal
+from .workers import init_worker, process_file, process_file_temporal
 
 
 # ---- Settings: Function word categories (maintain specified order) ----

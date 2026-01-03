@@ -6,7 +6,8 @@ This directory contains a simplified LIWC dictionary for **demonstration and tes
 
 ⚠️ **This sample dictionary is NOT suitable for research purposes**
 
-- This dictionary is a simplified version created solely for code verification and demonstration
+- This dictionary is a **synthetic demonstration dataset**, not derived from or extracted from the official J-LIWC dictionary
+- Created solely for code verification and demonstration purposes
 - For actual research and analysis, please use an official Japanese LIWC dictionary
 - This sample contains only limited vocabulary and does not guarantee linguistic validity
 
@@ -51,7 +52,7 @@ This sample dictionary includes the following categories:
 | 4 | auxverb | Auxiliary verbs | です (desu), ます (masu), た (ta), れる (reru) |
 | 5 | adverb | Adverbs | とても (totemo/very), すごく (sugoku/extremely), きっと (kitto/surely) |
 | 6 | conj | Conjunctions | そして (soshite/and), しかし (shikashi/however), でも (demo/but) |
-| 7 | negate | Negation | ない (nai/not), ず (zu/not), ぬ (nu/not) |
+| 7 | negate | Negation | ない (nai/not), ず (zu/not), ぬ (nu/not), まい (mai/not) |
 
 ## Usage
 

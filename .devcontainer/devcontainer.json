@@ -1,0 +1,38 @@
+{
+  "name": "Language Style Matching Development",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "workspaceFolder": "/workspace",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+  "remoteUser": "vscode",
+
+  // VS Code extensions
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-python.black-formatter",
+        "charliermarsh.ruff"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.testing.pytestEnabled": true,
+        "python.testing.unittestEnabled": false,
+        "python.testing.pytestArgs": ["-v"],
+        "editor.formatOnSave": true,
+        "python.formatting.provider": "black"
+      }
+    }
+  },
+
+  // Verify installation after container creation
+  "postCreateCommand": "python -c 'import spacy, pandas, numpy, pytest; print(\"✓ All dependencies installed\")' && pytest --version",
+
+  // Environment variables
+  "containerEnv": {
+    "PYTHONUNBUFFERED": "1"
+  }
+}

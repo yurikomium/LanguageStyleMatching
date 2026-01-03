@@ -33,7 +33,7 @@ test_rlsm_paper_examples.py - 学術論文準拠性テスト
 """
 
 import pytest
-from exploration.Transcript.rlsm.rlsm_core import (
+from rlsm.core import (
     rlsm_per_category_from_rates,
     compute_rlsm_core,
     EPS,

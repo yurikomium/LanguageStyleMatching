@@ -2,11 +2,10 @@
 """
 Language Style Matching execution script (parallel, CSV save only)
 Example execution:
-cd /workspace/exploration/Transcript
-python -m lsm.run_lsm \
+python -m lsm.runner \
   --round 1 2 \
-  --dic /workspace/exploration/Transcript/Japanese_Dictionary.dic \
-  --results /workspace/results/Transcript/2025-08-1-LanguageStyleMatching \
+  --dic path/to/Japanese_Dictionary.dic \
+  --results ./results/lsm \
   --procs 8 --chunksize 8
 """
 
@@ -27,9 +26,8 @@ os.environ.setdefault("MKL_NUM_THREADS", "1")
 os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
 os.environ.setdefault("VECLIB_MAXIMUM_THREADS", "1")
 
-# Use utilities under /workspace
-sys.path.append("/workspace/")
-from utils import DataAnalyzer  # noqa: E402
+# Use utilities
+from utils import DataAnalyzer
 
 # Child process side processing
 from .lsm_workers import init_worker, process_file, process_file_temporal
@@ -125,11 +123,9 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Language Style Matching batch runner")
     parser.add_argument("--round", nargs="+", type=int, default=[1, 2],
                         help="Target rounds (e.g. --round 1 2)")
-    parser.add_argument("--dic", type=str,
-                        default="/workspace/exploration/Transcript/Japanese_Dictionary.dic",
-                        help="Absolute path to LIWC dictionary file (.dic)")
-    parser.add_argument("--results", type=str,
-                        default="/workspace/results/Transcript/2025-08-1-LanguageStyleMatching",
+    parser.add_argument("--dic", type=str, required=True,
+                        help="Path to LIWC dictionary file (.dic)")
+    parser.add_argument("--results", type=str, default="./results/lsm",
                         help="CSV output directory")
     parser.add_argument("--procs", type=int, default=max(1, mp.cpu_count() - 1),
                         help="Number of parallel processes")

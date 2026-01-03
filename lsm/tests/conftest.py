@@ -4,7 +4,7 @@ import tempfile
 import textwrap
 import pytest
 
-from exploration.Transcript.lsm.liwc_lsm import load_liwc_dic, build_compiled_patterns
+from lsm.core import load_liwc_dic, build_compiled_patterns
 
 @pytest.fixture
 def liwc_sample_path(tmp_path):

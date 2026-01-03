@@ -1,10 +1,10 @@
 # test_rw_short_utterance_filter.py
 import pandas as pd
 import math
-from exploration.Transcript.rlsm.rlsm_workers import process_file_rlsm
+from rlsm.workers import process_file_rlsm
 
 def test_short_utterances_removed_only_for_rw(monkeypatch, tmp_path):
-    import exploration.Transcript.rlsm.rlsm_workers as W
+    import rlsm.workers as W
     # 1語/2語/3語のダミー計数を吐くモック
     def fake_rates(text):
         n = int(text)  # "1","2","3" を total にする

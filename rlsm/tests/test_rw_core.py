@@ -34,8 +34,8 @@ import math
 import numpy as np
 import pytest
 
-from exploration.Transcript.rlsm.rlsm_core import compute_rlsm_core, EPS
-from exploration.Transcript.rlsm.rlsm_workers import _compute_rw_window_turns
+from rlsm.core import compute_rlsm_core, EPS
+from rlsm.workers import _compute_rw_window_turns
 
 
 def test_rw_equals_plain_when_window_size_1_include_current_true():

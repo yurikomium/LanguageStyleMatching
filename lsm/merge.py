@@ -9,11 +9,10 @@ Purpose:
 - Auto-calculate lsm_total_words / lsm_f_talk_ratio / lsm_n_active_cats if missing.
 
 Example command:
-cd /workspace/exploration/Transcript/lsm
-python merge_lsm.py \
-  --lsm_1st /workspace/results/Transcript/2025-08-1-LanguageStyleMatching/data/lsm_results_1st_full.csv \
-  --lsm_2nd /workspace/results/Transcript/2025-08-1-LanguageStyleMatching/data/lsm_results_2nd_full.csv \
-  --out /workspace/data/processed/lsm/lsm_conversations.csv
+python lsm/merge.py \
+  --lsm_1st ./results/lsm/data/lsm_results_1st_full.csv \
+  --lsm_2nd ./results/lsm/data/lsm_results_2nd_full.csv \
+  --out ./data/processed/lsm/lsm_conversations.csv
 =============================================================================
 """
 import argparse

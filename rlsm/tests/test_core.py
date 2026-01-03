@@ -34,7 +34,7 @@ import numpy as np
 import pytest
 
 # テスト対象
-from exploration.Transcript.rlsm.rlsm_core import (
+from rlsm.core import (
     rlsm_per_category_from_rates,
     compute_pair_category_rlsm,
     aggregate_individual_category_means,

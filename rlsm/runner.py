@@ -2,11 +2,10 @@
 """
 rLSM execution script (parallel, CSV save: pairs/individual category/dyad category/final/individual overall)
 Example execution:
-cd /workspace/exploration/Transcript
-python -m exploration.Transcript.rlsm.run_rlsm \
-  --data /workspace/data/raw/Transcript \
-  --dic /workspace/exploration/Transcript/Japanese_Dictionary.dic \
-  --results /workspace/results/Transcript/2025-08-2-相互LSM \
+python -m rlsm.runner \
+  --data ./sample_data \
+  --dic path/to/Japanese_Dictionary.dic \
+  --results ./results/rlsm \
   --procs 8 --chunksize 8 --na_policy bilateral_only
 """
 
@@ -28,11 +27,8 @@ os.environ.setdefault("MKL_NUM_THREADS", "1")
 os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
 os.environ.setdefault("VECLIB_MAXIMUM_THREADS", "1")
 
-# Add /workspace to path
-sys.path.append("/workspace/")
-
 # Child process side processing
-from exploration.Transcript.rlsm.rlsm_workers import init_worker, process_file_rlsm  # noqa: E402
+from .workers import init_worker, process_file_rlsm
 
 # ---- Settings: Function word categories (maintain specified order) ----
 FUNCTION_WORD_CATEGORIES: List[str] = [
@@ -334,13 +330,11 @@ def run_rlsm_parallel(data_dir: str,
 
 def parse_args():
     ap = argparse.ArgumentParser(description="rLSM batch runner (paper-compliant)")
-    ap.add_argument("--data", type=str, default="/workspace/data/raw/Transcript",
+    ap.add_argument("--data", type=str, default="./sample_data",
                     help="Input CSV directory (*.csv directly under it)")
-    ap.add_argument("--dic", type=str,
-                    default="/workspace/exploration/Transcript/Japanese_Dictionary.dic",
-                    help="Absolute path to LIWC dictionary (.dic)")
-    ap.add_argument("--results", type=str,
-                    default="/workspace/results/Transcript/2025-08-2-相互LSM",
+    ap.add_argument("--dic", type=str, required=True,
+                    help="Path to LIWC dictionary (.dic)")
+    ap.add_argument("--results", type=str, default="./results/rlsm",
                     help="CSV output directory")
     ap.add_argument("--procs", type=int, default=max(1, mp.cpu_count() - 1),
                     help="Number of parallel processes")

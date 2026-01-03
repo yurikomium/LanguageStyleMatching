@@ -23,14 +23,12 @@ os.environ.setdefault("VECLIB_MAXIMUM_THREADS", "1")
 import numpy as np
 import spacy
 
-# Use utilities under /workspace
-import sys
-sys.path.append("/workspace/")
+# Use utilities
 from utils import DataAnalyzer
 try:
-    from .liwc_lsm import load_liwc_dic, build_compiled_patterns, count_liwc_categories, count_total_words, compute_lsm
+    from .core import load_liwc_dic, build_compiled_patterns, count_liwc_categories, count_total_words, compute_lsm
 except ImportError:
-    from liwc_lsm import load_liwc_dic, build_compiled_patterns, count_liwc_categories, count_total_words, compute_lsm
+    from lsm.core import load_liwc_dic, build_compiled_patterns, count_liwc_categories, count_total_words, compute_lsm
 
 # ---- Heavy resources shared within child process (process-wide global) ----
 _WORKER_NLP = None

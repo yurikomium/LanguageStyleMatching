@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 import pytest
 
-import exploration.Transcript.lsm.run_lsm as run_lsm
+import lsm.runner as run_lsm
 
 def test_parse_args_defaults(monkeypatch):
     monkeypatch.setattr(sys, "argv", ["prog"])

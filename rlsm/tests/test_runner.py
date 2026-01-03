@@ -36,7 +36,7 @@ import os
 import pandas as pd
 import types
 
-import exploration.Transcript.rlsm.run_rlsm as R
+import rlsm.runner as R
 
 
 def test_runner_writes_expected_rw_filenames(tmp_path, monkeypatch):

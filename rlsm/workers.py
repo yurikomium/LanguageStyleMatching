@@ -8,11 +8,10 @@ rLSM child process: Heavy initialization (spaCy, LIWC dictionary) and single fil
 
 import os
 import re
-from typing import Dict, Any, List, Optional, Tuple
-from exploration.Transcript.rlsm.unitize import unitize_transcript
+from typing import Dict, Any, List, Optional, Tuple, Deque
 from collections import deque
-from typing import Deque
-from exploration.Transcript.rlsm.rlsm_core import rlsm_per_category_from_rates, EPS as CORE_EPS
+from .unitize import unitize_transcript
+from .core import rlsm_per_category_from_rates, EPS as CORE_EPS
 
 # Prevent parallel x BLAS runaway (child process insurance)
 os.environ.setdefault("OMP_NUM_THREADS", "1")
@@ -25,12 +24,8 @@ import numpy as np
 import pandas as pd
 import spacy
 
-# Add /workspace to path
-import sys
-sys.path.append("/workspace/")
-
 # Reuse existing LIWC utilities
-from exploration.Transcript.lsm.liwc_lsm import (  # type: ignore
+from lsm.core import (
     load_liwc_dic,
     build_compiled_patterns,
     count_liwc_categories,
@@ -38,7 +33,7 @@ from exploration.Transcript.lsm.liwc_lsm import (  # type: ignore
 )
 
 # rLSM core (paper-compliant)
-from exploration.Transcript.rlsm.rlsm_core import compute_rlsm_core  # type: ignore
+from .core import compute_rlsm_core
 from collections import defaultdict
 
 # ---- Heavy resources shared within child process (process-wide global) ----

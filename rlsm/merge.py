@@ -4,10 +4,10 @@ rlsm_conversations.csv (static rLSM) + rw_rlsm_conversations.csv (rolling rLSM)
 → De-duplication & clean merge version
 
 Usage example:
-python merge_rlsm.py \
-  --rlsm /workspace/results/Transcript/2025-08-2-相互LSM/data/rlsm_conversations_full.csv \
-  --rw   /workspace/results/Transcript/2025-08-2-相互LSM/data/rw_rlsm_conversations_full.csv \
-  --out  /workspace/data/processed/rlsm/rlsm_conversations.csv \
+python rlsm/merge.py \
+  --rlsm ./results/rlsm/data/rlsm_conversations_full.csv \
+  --rw   ./results/rlsm/data/rw_rlsm_conversations_full.csv \
+  --out  ./data/processed/rlsm/rlsm_conversations.csv \
   --param-window 8 --include-current true --min-window-tokens 0 --na-policy any
 =============================================================================
 """

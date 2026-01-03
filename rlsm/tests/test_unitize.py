@@ -35,7 +35,7 @@ test_unitize_brackets_and_merge_split.py - テキスト前処理・マージ・�
 
 import pandas as pd
 import numpy as np
-from exploration.Transcript.rlsm.unitize import unitize_transcript
+from rlsm.unitize import unitize_transcript
 
 def test_brackets_unwrap_and_drop_default():
     df = pd.DataFrame([

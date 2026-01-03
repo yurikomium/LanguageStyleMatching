@@ -2,7 +2,7 @@
 import math
 import pytest
 
-from exploration.Transcript.lsm.liwc_lsm import (
+from lsm.core import (
     compute_lsm,
     match_token_to_categories,
 )

@@ -1,6 +1,6 @@
 # test_rw_pair_rows_table5.py
 import math
-from exploration.Transcript.rlsm.rlsm_workers import _compute_rw_window_turns, _build_rw_pair_rows
+from rlsm.workers import _compute_rw_window_turns, _build_rw_pair_rows
 
 def test_rw_pair_rows_respect_table5_nan_when_prev_zero_curr_pos():
     cats = ["c"]

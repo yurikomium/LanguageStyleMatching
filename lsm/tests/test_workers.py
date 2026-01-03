@@ -2,7 +2,7 @@
 import pandas as pd
 import numpy as np
 
-from exploration.Transcript.lsm.lsm_workers import (
+from lsm.workers import (
     _window_index,
     split_conversation_by_time,
 )

@@ -27,7 +27,7 @@ This README summarizes the intended interpretation and implementation scope. Ple
 
 ## Validation & Scope (how we justify “paper-aligned”)
 
-We do **not** claim bit-for-bit equivalence to any external/official implementation. Instead, we make the implementation choices explicit and validate key behaviors with tests:
+We make the implementation choices explicit and validate key behaviors with tests:
 
 - **rLSM core rules (Table 5-style missingness handling)**: see `rlsm/tests/test_core.py`
 - **Paper example checks (where applicable)**: see `rlsm/tests/test_core_paper_examples.py`
@@ -84,7 +84,7 @@ Original English LIWC uses 9 function-word categories; for Japanese we use the f
 Rationale:
 
 - Articles / quantifiers are excluded due to weak functional correspondence in Japanese.
-- J-LIWC is used **only for category identification**, not for psychological interpretation.
+- J-LIWC is used only for category identification, not for psychological interpretation.
 
 ### B) Tokenization and dictionary matching (reproducibility assumptions)
 
@@ -109,14 +109,6 @@ The easiest way to get started is using VS Code with Dev Containers. This provid
 2. Click "Reopen in Container" when prompted (or use Command Palette: "Dev Containers: Reopen in Container")
 3. Wait for the container to build (first time only, ~5-10 minutes)
 4. All dependencies are automatically installed!
-
-**Why Dev Container?**
-
-- ✅ **Consistent environment** across all platforms (Windows, macOS, Linux)
-- ✅ **No system pollution** - everything runs in an isolated container
-- ✅ **Pre-configured** - Python, spaCy, and all dependencies ready to use
-- ✅ **Tested and verified** - all 31 tests pass in this environment
-- ✅ **Easy cleanup** - simply delete the container when done
 
 **What's included:**
 

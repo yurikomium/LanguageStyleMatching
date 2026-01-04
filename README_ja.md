@@ -1,6 +1,6 @@
 ## Language Style Matching for Japanese（日本語版 README）
 
-このリポジトリは、日本語テキストに対して **Language Style Matching (LSM)**、**reciprocal / directional LSM (rLSM)**、および **rolling-window rLSM (rw.rLSM)** を計算するための実装です。PhD 選考用の「研究実装の再現可能な成果物」として、定義（原典参照）・実装仕様・入出力仕様・実行手順・テスト手順を README で明文化します。
+このリポジトリは、日本語テキストに対して **Language Style Matching (LSM)**、**reciprocal / directional LSM (rLSM)**、および **rolling-window rLSM (rw.rLSM)** を計算するための実装です。定義（原典参照）・実装仕様・入出力仕様・実行手順・テスト手順を README で明文化します。
 
 - **英語版 README**: `README.md`（本ファイルは日本語版）
 - **最小実行例**: `examples/`

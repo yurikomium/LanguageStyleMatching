@@ -13,10 +13,10 @@
 
 ### 前提（Dev Container を使う場合）
 
-- Docker Desktop: `https://www.docker.com/products/docker-desktop`
-- Visual Studio Code: `https://code.visualstudio.com/`
-- Dev Containers extension: `https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers`
-
+- Docker Desktop
+- Visual Studio Code
+- Dev Containers extension
+  
 ### まず動くことを確認（examples）
 
 ```bash
@@ -53,9 +53,9 @@ pytest -v
 
 定義・数式の詳細は原典を参照してください。本リポジトリでは「原典の設計意図に沿う」ことを目標にしつつ、完全一致を断言するのではなく、**実装上の扱いを仕様として明記し、主要ルールをテストで検証できる形**にしています。
 
-### 検証の根拠（“paper-aligned”の言い方について）
+### 検証の根拠
 
-以下のテストにより、少なくとも主要な挙動をコードとして検証できる状態にしています（詳細は各テストファイルを参照）。
+以下のテストにより、主要な挙動をコードとして検証できる状態にしています（詳細は各テストファイルを参照）。
 
 - rLSM コア（0/欠測の扱い等の主要ルール）: `rlsm/tests/test_core.py`
 - 論文例の検証（該当範囲）: `rlsm/tests/test_core_paper_examples.py`
@@ -128,7 +128,7 @@ pytest rlsm/tests/test_core_paper_examples.py -v
 
 ### Option 1: Dev Container（推奨）
 
-VS Code + Dev Containers を使うと、同一環境を再現しやすく（再現性が高く）、ローカル環境を汚さずに実行できます。
+VS Code + Dev Containers を使うと、同一環境を再現しやすく、ローカル環境を汚さずに実行できます。
 
 **前提（Prerequisites）**:
 
@@ -142,14 +142,6 @@ VS Code + Dev Containers を使うと、同一環境を再現しやすく（再�
 2. プロンプトが出たら `Reopen in Container`（またはコマンドパレットから `Dev Containers: Reopen in Container`）
 3. 初回はコンテナビルドに数分かかります（目安: 5–10 分）
 4. 依存関係は自動インストールされます
-
-**Dev Container を推奨する理由**:
-
-- ✅ クロスプラットフォームで環境が揃う（Windows/macOS/Linux）
-- ✅ システム環境を汚さない（隔離環境）
-- ✅ Python / spaCy / 依存が事前に揃った状態で実行できる
-- ✅ この環境でテストが通ることを前提に検証しやすい
-- ✅ 後片付けが簡単（コンテナを消せばよい）
 
 **コンテナに含まれるもの（目安）**:
 
@@ -251,7 +243,7 @@ python examples/basic_lsm_example.py
 python examples/basic_rlsm_example.py
 ```
 
-`examples/` は、この実装の最小動作例（入口）です。実データに適用する前に、ここで入出力の感覚と実行成功を確認してください。
+`examples/` は、この実装の最小動作例（入口）です。
 
 ### 入力データ形式（CSV）
 

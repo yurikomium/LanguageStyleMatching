@@ -193,7 +193,7 @@ docker run --rm -it -v "$(pwd):/workspace" lsm bash
 1. リポジトリを取得:
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/yurikomium/LanguageStyleMatching
 cd LanguageStyleMatching
 ```
 

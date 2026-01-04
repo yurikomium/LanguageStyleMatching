@@ -4,7 +4,7 @@ title: "Language Style Matching for Japanese"
 type: software
 authors:
   - name: "Kikuchi"
-repository-code: "https://github.com/<your-org-or-username>/LanguageStyleMatching"
+repository-code: "https://github.com/yurikomium/LanguageStyleMatching"
 license: "MIT"
 keywords:
   - "language style matching"

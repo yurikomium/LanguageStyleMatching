@@ -155,7 +155,7 @@ def _build_rw_pair_rows(
     rows: List[Dict[str, Any]] = []
     pair_index = 0
     min_tok = int(ctx.get("rw_min_window_tokens", 0))
-    # eps は ctx → rlsm_core.EPS → 1e-4 の優先で解決
+    # Resolve eps with priority: ctx -> rlsm_core.EPS -> 1e-4
     eps = float(ctx.get("eps", ctx.get("rlsm_eps", CORE_EPS if 'CORE_EPS' in globals() else 1e-4)))
     zero_tol = float(ctx.get("zero_tol", 0.0))
 
@@ -219,7 +219,7 @@ def _compute_rw_window_turns(
     turns_raw: [{"speaker":"female"/"male","counts":{cat:int},"total":int,"turn_index":int}, ...]
     return   : [{"speaker":..., "rates":{cat:%}, "win_size":int, "win_total":int, "turn_index":int}, ...]
     """
-    # 話者ラベルは動的に確保（'female'/'male'固定にしない）
+    # Track speaker labels dynamically (do not assume only 'female'/'male')
     dq: Dict[str, Deque[Dict[str, Any]]] = {}
     sums: Dict[str, Dict[str, int]] = {}
     sums_total: Dict[str, int] = {}
@@ -248,7 +248,7 @@ def _compute_rw_window_turns(
         t_idx = int(t.get("turn_index", -1))
         ensure(spk)
         if not include_current:
-            out_turns.append(make_row(spk, t_idx))  # 追加前の窓
+            out_turns.append(make_row(spk, t_idx))  # Window before adding the current turn
 
         dq[spk].append(t)
         for c in categories:
@@ -261,7 +261,7 @@ def _compute_rw_window_turns(
             sums_total[spk] -= int(old["total"])
 
         if include_current:
-            out_turns.append(make_row(spk, t_idx))  # 追加後の窓
+            out_turns.append(make_row(spk, t_idx))  # Window after adding the current turn
 
     return out_turns
 

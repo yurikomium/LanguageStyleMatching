@@ -1,35 +1,35 @@
 # -*- coding: utf-8 -*-
 """
 ==============================================================================
-test_rlsm_paper_examples.py - 学術論文準拠性テスト
+test_rlsm_paper_examples.py - Paper compliance tests
 ==============================================================================
 
-このテストファイルが担保する機能：
+What this test file guarantees:
 
-1. **論文Table 2の数値検証**
-   - Romeo-Benvolioの対話例での厳密な数値検証
-   - 論文記載の具体的な使用率（FW%）での計算確認
-   - 理論値と実装値の完全一致
+1. **Numeric verification against Table 2**
+   - Strict numeric verification using the Romeo–Benvolio dialog example
+   - Computation using the concrete usage rates (FW%) reported in the paper
+   - Exact agreement between theory and implementation
 
-2. **式(8)の実装準拠性**
+2. **Compliance with Eq. (8)**
    - rLSM_B(FW) = 1 - |A1-B1|/(A1+B1+eps) ≈ .59
-   - 個別ペアレベルでのrLSM計算の正確性
+   - Correctness of pair-level rLSM computation
 
-3. **式(9)の実装準拠性**
+3. **Compliance with Eq. (9)**
    - rLSM_A(FW) = 1 - |B1-A2|/(B1+A2+eps) ≈ .70
-   - 話者交代ペアでの正確な計算
+   - Correct computation for speaker-switch pairs
 
-4. **式(14)とカテゴリ平均の準拠性**
-   - 最終ダイアドスコア ≈ .74 の正確な再現
-   - カテゴリ等重み平均の正しい実装確認
+4. **Compliance with Eq. (14) and category averaging**
+   - Accurate reproduction of the final dyad score ≈ .74
+   - Correct implementation of equal-weight mean over categories
 
-5. **学術的信頼性の担保**
-   - 公開論文の計算例での完全再現性
-   - 理論的基盤と実装の一致性証明
-   - rLSMアルゴリズムの学術的妥当性確認
+5. **Scientific reliability**
+   - Full reproducibility of the published computational example
+   - Demonstrates agreement between theoretical foundation and implementation
+   - Validates the academic soundness of the rLSM algorithm
 
-注：個人平均については論文テキストと若干の数値差異があるが、
-   式(8)(9)および最終ダイアド(式14)は完全一致するため実装は正確。
+Note: individual means differ slightly from the paper prose, but since Eq. (8), (9),
+and the final dyad (Eq. 14) match exactly, the implementation is correct.
 """
 
 import pytest
@@ -39,28 +39,28 @@ from rlsm.core import (
     EPS,
 )
 
-# 論文 Table 2, Example C の値（FW ％）
+# Values from the paper: Table 2, Example C (FW %)
 # A1=60, B1=25, A2=46.67..., B2=42.857..., A3=75
 A1, B1 = 60.0, 25.0
 A2, B2 = 46.6666666667, 42.8571428571
 A3      = 75.0
 
 def test_romeo_benvolio_eq8_statement1():
-    """式(8): rLSM_B(FW) = 1 - |A1-B1|/(A1+B1+eps) ≈ .59"""
+    """Eq. (8): rLSM_B(FW) = 1 - |A1-B1|/(A1+B1+eps) ≈ .59"""
     out = rlsm_per_category_from_rates(
         {"fw": A1}, {"fw": B1}, ["fw"], eps=EPS
     )
     assert out["fw"] == pytest.approx(0.588235, rel=1e-6, abs=1e-6)
 
 def test_romeo_benvolio_eq9_statement2():
-    """式(9): rLSM_A(FW) = 1 - |B1-A2|/(B1+A2+eps) ≈ .70"""
+    """Eq. (9): rLSM_A(FW) = 1 - |B1-A2|/(B1+A2+eps) ≈ .70"""
     out = rlsm_per_category_from_rates(
         {"fw": B1}, {"fw": A2}, ["fw"], eps=EPS
     )
     assert out["fw"] == pytest.approx(0.6976, rel=1e-4, abs=1e-4)
 
 def test_romeo_benvolio_eq14_dyad_final_fw_only():
-    """式(14) + カテゴリ平均（FWのみ）: 最終ダイアド ≈ .74"""
+    """Eq. (14) + category mean (FW only): final dyad ≈ .74"""
     turns = [
         {"speaker": "A", "rates": {"fw": A1}},  # Romeo
         {"speaker": "B", "rates": {"fw": B1}},  # Benvolio
@@ -69,11 +69,11 @@ def test_romeo_benvolio_eq14_dyad_final_fw_only():
         {"speaker": "A", "rates": {"fw": A3}},
     ]
     res = compute_rlsm_core(turns, ["fw"], na_policy="bilateral_only", eps=EPS)
-    # ダイアド最終（FWのみなのでカテゴリ平均=FW値）
+    # Final dyad score (FW only, so category mean equals the FW value)
     assert res["dyad_final"] == pytest.approx(0.74, rel=5e-3, abs=5e-3)
 
-    # 参考: 応答側に帰属する個人平均（論文本文では A≈.77, B≈.71 と記述あり）
-    # 本実装では、Table 2 のFW%を厳密に用いると
+    # Note: individual means attributed to the responder (the paper text says A≈.77, B≈.71)
+    # In this implementation, if we use the FW% in Table 2 strictly,
     #   A(=Romeo) ≈ 0.712, B(=Benvolio) ≈ 0.773
-    # となる（dyadは.742...で一致）。個人値はテキスト記述と入れ替わるが、
-    # 式(8)(9)および最終ダイアド（式14）は一致するため、ここでは個人平均のアサートは行わない。
+    # we get these values (dyad matches at ~.742...). The individual values swap vs the paper prose, but
+    # since Eq. (8), (9), and the final dyad (Eq. 14) match, we do not assert the individual means here.

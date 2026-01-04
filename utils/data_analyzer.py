@@ -6,22 +6,22 @@ from typing import Dict, List, Optional
 
 
 class DataAnalyzer:
-    """データ読み込みと基本アクセスに特化したクラス
+    """A small utility focused on loading data and providing basic accessors.
 
-    追加: 交換意欲（女性/男性）の正規化APIを提供
-    - get_matching_preferences(): 列名正規化とブール化を行い、
-      [female_id, male_id, want_female, want_male] を返す
+    Added: a normalization API for matching preferences (female/male).
+    - get_matching_preferences(): normalizes column names and boolean values,
+      and returns [female_id, male_id, want_female, want_male].
     """
 
     def __init__(self, data_dir: Optional[str] = None, matching_file: Optional[str] = None):
-        """データ読み込みと基本分類
+        """Load data and perform basic categorization.
 
         Parameters:
         -----------
         data_dir : str, optional
-            対話データが格納されているディレクトリ
+            Directory containing conversation CSV files.
         matching_file : str, optional
-            マッチングデータのCSVファイルパス
+            Path to the matching data CSV file.
         """
         self.data_dir = data_dir
         self.matching_df = None
@@ -38,7 +38,7 @@ class DataAnalyzer:
             self.second_round_files = []
 
     def _load_conversations_from_dir(self, data_dir: str):
-        """指定ディレクトリからCSVファイルを読み込む"""
+        """Load all CSV files from the specified directory."""
         data_path = Path(data_dir)
         for csv_file in data_path.glob("*.csv"):
             try:
@@ -48,12 +48,12 @@ class DataAnalyzer:
                 print(f"Warning: Failed to load {csv_file.name}: {e}")
 
     def _classify_conversations(self):
-        """1回目・2回目の対話データを分類"""
+        """Classify conversation files into first/second round buckets."""
         self.first_round_files = []
         self.second_round_files = []
 
         for filename in self.conversation_data.keys():
-            # 例: "01_1_1_A_F088_M073_concat.csv" から会話回数「1」を抽出
+            # Example: extract the round number ("1") from "01_1_1_A_F088_M073_concat.csv"
             match = re.search(r'^\d+_(\d+)_', filename)
             if match:
                 round_num = match.group(1)
@@ -63,30 +63,30 @@ class DataAnalyzer:
                     self.second_round_files.append(filename)
 
     def get_matching_data(self) -> Optional[pd.DataFrame]:
-        """マッチングデータを取得"""
+        """Return the matching DataFrame (if loaded)."""
         return self.matching_df
 
     def _normalize_bool(self, s: pd.Series) -> pd.Series:
-        """ブール値を正規化"""
-        # True/False, TRUE/FALSE, 1/0, yes/no を許容
+        """Normalize a series into boolean values."""
+        # Accept True/False, TRUE/FALSE, 1/0, yes/no
         return s.apply(lambda x: True if str(x).strip().lower() in {"true", "1", "t", "y", "yes"}
                                  else (False if str(x).strip().lower() in {"false", "0", "f", "n", "no"}
                                        else pd.NA))
 
     def get_matching_preferences(self) -> pd.DataFrame:
         """
-        交換意欲（女性/男性）を正規化して返す。
+        Return normalized matching preferences (female/male).
 
         Returns
         -------
         DataFrame with columns: female_id(Int64), male_id(Int64), want_female(boolean), want_male(boolean)
         """
         if self.matching_df is None:
-            raise ValueError("マッチングデータが読み込まれていません")
+            raise ValueError("Matching data has not been loaded.")
 
         df = self.matching_df.copy()
 
-        # 列名正規化（日本語→英語）
+        # Normalize column names (Japanese -> English)
         col_map = {
             "女性ID": "female_id",
             "男性ID": "male_id",
@@ -100,11 +100,14 @@ class DataAnalyzer:
             if jp in df.columns:
                 df = df.rename(columns={jp: en})
 
-        # 必須列チェック
+        # Required columns check
         required = {"female_id", "male_id", "want_female", "want_male"}
         missing = required - set(df.columns)
         if missing:
-            raise KeyError(f"交換意欲列が見つかりません（不足: {missing}）。data_loader で供給される列をご確認ください。")
+            raise KeyError(
+                f"Matching preference columns not found (missing: {missing}). "
+                "Please verify the columns provided by your data loader."
+            )
 
         df["female_id"] = pd.to_numeric(df["female_id"], errors="coerce").astype("Int64")
         df["male_id"] = pd.to_numeric(df["male_id"], errors="coerce").astype("Int64")
@@ -115,11 +118,11 @@ class DataAnalyzer:
 
     def get_conversations(self, round_number: Optional[int] = None) -> Dict[str, pd.DataFrame]:
         """
-        対話データを取得
+        Get conversation data.
 
         Returns:
         --------
-        辞書形式の対話データ {filename: dataframe}
+        A dict of conversation data: {filename: dataframe}
         """
         if round_number == 1:
             return {filename: self.conversation_data[filename]
@@ -130,19 +133,19 @@ class DataAnalyzer:
         elif round_number is None:
             return self.conversation_data
         else:
-            raise ValueError("round_number は 1, 2, または None を指定してください")
+            raise ValueError("round_number must be 1, 2, or None.")
 
     def get_conversation_files(self, round_number: Optional[int] = None) -> List[str]:
         """
-        ファイル名のリストを取得
+        Get the list of conversation file names.
 
         Parameters:
         -----------
-        round_number: 1 (1回目), 2 (2回目), None (全て)
+        round_number: 1 (first round), 2 (second round), None (all)
 
         Returns:
         --------
-        ファイル名のリスト
+        List of file names.
         """
         if round_number == 1:
             return self.first_round_files.copy()
@@ -151,25 +154,25 @@ class DataAnalyzer:
         elif round_number is None:
             return list(self.conversation_data.keys())
         else:
-            raise ValueError("round_number は 1, 2, または None を指定してください")
+            raise ValueError("round_number must be 1, 2, or None.")
 
     def get_single_conversation(self, filename: str) -> Optional[pd.DataFrame]:
         """
-        特定のファイルの対話データを取得
+        Get conversation data for a specific file.
 
         Parameters:
         -----------
-        filename: ファイル名またはファイルパス
+        filename: file name or file path
 
         Returns:
         --------
         pandas.DataFrame or None
         """
-        # ファイル名だけの場合
+        # If it's just a file name
         if filename in self.conversation_data:
             return self.conversation_data[filename]
 
-        # フルパスの場合は直接読み込み
+        # If it's a full path, load directly
         if os.path.exists(filename):
             try:
                 return pd.read_csv(filename)
@@ -177,7 +180,7 @@ class DataAnalyzer:
                 print(f"Warning: Failed to load {filename}: {e}")
                 return None
 
-        # ベース名で検索
+        # Fall back to searching by basename
         base_name = os.path.basename(filename)
         if base_name in self.conversation_data:
             return self.conversation_data[base_name]

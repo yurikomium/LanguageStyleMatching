@@ -1,36 +1,36 @@
 # -*- coding: utf-8 -*-
 """
 ==============================================================================
-test_unitize_brackets_and_merge_split.py - テキスト前処理・マージ・分割機能テスト
+test_unitize_brackets_and_merge_split.py - Tests for text preprocessing, merging, and splitting
 ==============================================================================
 
-このテストファイルが担保する機能：
+What this test file guarantees:
 
-1. **ブラケット処理機能**
-   - [え]、[笑]などの記述タグの適切な処理
-   - unwrapモード：内容を残してブラケットのみ除去
-   - 記述タグ（[笑]等）の完全削除
-   - 空のブラケット[]の適切な除去
+1. **Bracket handling**
+   - Proper handling of annotation tags like [え], [笑], etc.
+   - unwrap mode: keep contents while removing only the brackets
+   - Full removal of annotation tags (e.g., [笑])
+   - Proper removal of empty brackets []
 
-2. **同話者連続発話のマージ機能**
-   - 時間的に連続する同話者発話の自動結合
-   - merge_gap閾値による結合制御
-   - テキスト連結時の適切なスペース挿入
+2. **Merging consecutive turns by the same speaker**
+   - Automatic merging of temporally adjacent same-speaker turns
+   - Merge control via the merge_gap threshold
+   - Proper space insertion when concatenating text
 
-3. **異話者重複の分割と帰属**
-   - オーバーラップ発話の検出と分割処理
-   - 後着優先ポリシー（後から始まった発話が重複区間を専有）
-   - 先着発話の適切な時間カットと残存部分の処理
+3. **Splitting overlaps across different speakers and assignment**
+   - Detect and split overlapping utterances
+   - Latter-starting utterance takes ownership of the overlap interval
+   - Earlier-starting utterance is trimmed appropriately and the remainder is preserved
 
-4. **交互性の確保**
-   - 分割・マージ後の話者交互パターンの実現
-   - 連続同話者の回避
-   - 時間的連続性の保持（end[i] ≤ start[i+1]）
+4. **Ensuring alternation**
+   - Achieve an alternating speaker pattern after split/merge
+   - Avoid consecutive turns by the same speaker
+   - Preserve temporal consistency (end[i] ≤ start[i+1])
 
-5. **時間ベースの処理精度**
-   - 秒単位での正確な時間管理
-   - 時間比に基づくテキスト分割の近似処理
-   - 非重複条件の厳密な担保
+5. **Time-based processing accuracy**
+   - Accurate time handling at the second level
+   - Approximate text splitting based on time ratios
+   - Strict enforcement of non-overlap constraints
 """
 
 import pandas as pd
@@ -47,16 +47,16 @@ def test_brackets_unwrap_and_drop_default():
     out, rep = unitize_transcript(
         df, mode="approx", merge_gap=0.0, strip_tags=True, bracket_mode="unwrap"
     )
-    # 中身を残して[]は外す
+    # Keep the content but remove the surrounding brackets []
     assert out.loc[0, "text_clean"].startswith("え ")
     assert "たぶん" in out.loc[out["text"].str.contains("たぶん")].iloc[0]["text_clean"]
-    # 記述タグは丸ごと削除
+    # Remove descriptive tags entirely
     assert out.loc[1, "text_clean"].startswith("はい")
-    # 空の[]は消える
+    # Empty [] disappears
     assert "[]" not in out.loc[3, "text_clean"]
 
 def test_same_speaker_merge_with_gap_threshold():
-    # female が2回連続（0.0–1.0 と 1.0–2.0）→ merge_gap=0.0 なら結合、>0でもOK
+    # Same speaker twice in a row (0.0–1.0 and 1.0–2.0) -> merged if merge_gap=0.0 (and also OK if >0)
     df = pd.DataFrame([
         {"start": 0.0, "end": 1.0, "speaker": "female", "text": "A"},
         {"start": 1.0, "end": 2.0, "speaker": "female", "text": "B"},
@@ -67,7 +67,7 @@ def test_same_speaker_merge_with_gap_threshold():
     assert out.iloc[0]["text_clean"] == "A B"
 
 def test_overlap_is_split_and_assigned_to_latter_speaker():
-    # 例：あなたが提示したケース（M 長発話中に F が割り込み）
+    # Example: the case you provided (F interrupts during a long M utterance)
     df = pd.DataFrame([
         {"start": 1.71, "end": 3.08,  "speaker": "female", "text": "F1"},
         {"start": 2.24, "end": 3.17,  "speaker": "male",   "text": "M1"},
@@ -76,15 +76,15 @@ def test_overlap_is_split_and_assigned_to_latter_speaker():
         {"start": 7.63, "end": 14.23, "speaker": "male",   "text": "M3"},
         {"start": 8.48, "end": 8.77,  "speaker": "female", "text": "F3"},
     ])
-    # 同話者の分割断片を“交互”に寄せたいので、ギャップを許容して結合する
+    # Merge split fragments from the same speaker (allowing small gaps) to preserve alternation
     out, rep = unitize_transcript(
-        df, mode="approx", merge_gap=10.0, strip_tags=False  # ← 10秒まで同話者結合
+        df, mode="approx", merge_gap=10.0, strip_tags=False  # ← merge same-speaker turns up to 10 seconds apart
     )
-    # 非重複性
+    # Non-overlap property
     for i in range(len(out)-1):
         assert out.iloc[i]["end"] <= out.iloc[i+1]["start"]
 
-    # 期待される分割（時間順）
+    # Expected split (time order)
     # F:1.71–2.24 / M:2.24–5.08 / F:5.33–6.66 / M:7.63–8.48 / F:8.48–8.77 / M:8.77–14.23
     times = [(round(r["start"], 2), round(r["end"], 2), r["speaker"]) for _, r in out.iterrows()]
     assert times == [
@@ -96,6 +96,6 @@ def test_overlap_is_split_and_assigned_to_latter_speaker():
         (8.77, 14.23, "male"),
     ]
 
-    # 交互性（連続で同話者になっていない）
+    # Alternation (no consecutive turns by the same speaker)
     for i in range(len(out)-1):
         assert out.iloc[i]["speaker"] != out.iloc[i+1]["speaker"]

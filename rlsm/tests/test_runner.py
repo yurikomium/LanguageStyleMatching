@@ -1,35 +1,35 @@
 # -*- coding: utf-8 -*-
 """
 ==============================================================================
-test_runner_outputs.py - 実行フレームワーク・出力形式テスト
+test_runner_outputs.py - Runner framework and output format tests
 ==============================================================================
 
-このテストファイルが担保する機能：
+What this test file guarantees:
 
-1. **出力ファイル名の正確性**
-   - rwフラグ有効時の適切なファイル命名（rw_プレフィックス）
-   - rwフラグ無効時の標準ファイル命名
-   - 各カテゴリ（conversations, pairs, individual, dyad）の網羅的出力
+1. **Correct output file names**
+   - Proper naming when rw is enabled (rw_ prefix)
+   - Standard naming when rw is disabled
+   - Comprehensive outputs for each category (conversations, pairs, individual, dyad)
 
-2. **並列処理フレームワーク**
-   - process_file_rlsm の適切な並列実行
-   - プロセス間でのデータ統合の正確性
-   - context引数の適切な引き渡し
+2. **Parallel processing framework**
+   - process_file_rlsm is executed in parallel as intended
+   - Correct aggregation/integration across processes
+   - Correct propagation of the context argument
 
-3. **エラーハンドリング**
-   - 処理失敗時のエラーファイル生成（rw_rlsm_errors.csv）
-   - 成功時のエラーファイル非生成
-   - 適切なエラー情報の記録
+3. **Error handling**
+   - Generates an error file on failure (rw_rlsm_errors.csv)
+   - Does not generate the error file on success
+   - Records appropriate error information
 
-4. **フル版と丸め版の出力**
-   - float_format指定による数値丸め版
-   - フル精度版（_full.csv）の並行出力
-   - 両形式での行数整合性
+4. **Full vs rounded outputs**
+   - Rounded output via float_format
+   - Full-precision output in parallel (_full.csv)
+   - Row-count consistency between both formats
 
-5. **モック・テスト環境**
-   - 実際のファイル処理を行わない軽量テスト
-   - 一時ディレクトリでの安全なファイル操作
-   - monkeypatchによる外部依存の分離
+5. **Mocked test environment**
+   - Lightweight tests without running heavy real file processing
+   - Safe file operations in a temporary directory
+   - Isolation of external dependencies via monkeypatch
 """
 
 import os
@@ -40,7 +40,7 @@ import rlsm.runner as R
 
 
 def test_runner_writes_expected_rw_filenames(tmp_path, monkeypatch):
-    # ダミーのCSV1枚
+    # One dummy CSV
     df = pd.DataFrame([
         {"speaker": "female", "text": "a", "text_clean": "a"},
         {"speaker": "male",   "text": "b", "text_clean": "b"},
@@ -48,14 +48,14 @@ def test_runner_writes_expected_rw_filenames(tmp_path, monkeypatch):
     f = tmp_path / "F001_M002.csv"
     df.to_csv(f, index=False)
 
-    # process_file_rlsm をモック: 必要最低限の辞書を返す
+    # Mock process_file_rlsm: return a minimal dict
     def fake_worker(args, context=None):
         return {
             "conversation_summary": {"file_path": str(f)},
             "pairs_rows": [{"file_path": str(f)}],
             "individual_category_rows": [{"file_path": str(f)}],
             "dyad_category_rows": [{"file_path": str(f)}],
-            # rw enabled のとき追加
+            # Added when rw is enabled
             "rw_conv_row": {"file_path": str(f)},
             "rw_pair_rows": [{"file_path": str(f)}],
             "rw_individual_rows": [{"file_path": str(f)}],
@@ -67,7 +67,7 @@ def test_runner_writes_expected_rw_filenames(tmp_path, monkeypatch):
     results_dir = tmp_path / "out"
     os.makedirs(results_dir, exist_ok=True)
 
-    # rw=1 で実行
+    # Run with rw=1
     R.run_rlsm_parallel(
         data_dir=str(tmp_path),
         dic_path="/dev/null",
@@ -88,7 +88,7 @@ def test_runner_writes_expected_rw_filenames(tmp_path, monkeypatch):
         rw_min_window_tokens=0,
     )
 
-    # 期待ファイル
+    # Expected files
     expect = [
         "rw_rlsm_conversations.csv",
         "rw_rlsm_conversations_full.csv",
@@ -102,10 +102,10 @@ def test_runner_writes_expected_rw_filenames(tmp_path, monkeypatch):
     for name in expect:
         assert (results_dir / name).exists()
 
-    # エラーCSV（ダミーで1件エラーを返すバージョンも検査可能だが、ここでは存在しないことを確認）
+    # Error CSV (we could also test a version that returns one dummy error, but here we assert it does not exist)
     assert not (results_dir / "rw_rlsm_errors.csv").exists()
 
-    # rw=0 のときは rw系ファイルが出ない
+    # With rw=0, rw-related files are not created
     results_dir2 = tmp_path / "out2"
     os.makedirs(results_dir2, exist_ok=True)
     R.run_rlsm_parallel(

@@ -9,8 +9,8 @@ from lsm.core import load_liwc_dic, build_compiled_patterns
 @pytest.fixture
 def liwc_sample_path(tmp_path):
     """
-    極小J-LIWC風辞書（カテゴリ: ppron=1, ipron=2）。
-    % でカテゴリ定義 → % で語彙。ワイルドカード(*)を含む。
+    Minimal J-LIWC-like dictionary (categories: ppron=1, ipron=2).
+    Uses % to separate category definitions and vocabulary. Includes wildcard (*).
     """
     dic_text = textwrap.dedent("""\
         %

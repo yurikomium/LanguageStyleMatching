@@ -1,39 +1,39 @@
 # -*- coding: utf-8 -*-
 """
 ==============================================================================
-test_rlsm_core.py - RLSMコアアルゴリズムの基本動作テスト
+test_rlsm_core.py - Core behavior tests for the rLSM algorithm
 ==============================================================================
 
-このテストファイルが担保する機能：
+What this test file guarantees:
 
-1. **Table 5規則の実装担保**
-   - 前回値=0, 今回値=0 → NaN（欠損として除外）
-   - 前回値=0, 今回値>0 → NaN（欠損として除外）  
-   - 前回値>0, 今回値=0 → 通常計算（低いrLSM値）
+1. **Table 5 rule compliance**
+   - prev=0, curr=0 -> NaN (excluded as missing)
+   - prev=0, curr>0 -> NaN (excluded as missing)
+   - prev>0, curr=0 -> computed normally (low rLSM)
 
-2. **話者交代ペアのみの計算**
-   - 同一話者の連続発話は計算対象外であること
-   - 話者が交代した隣接ペアのみでrLSMを計算すること
+2. **Compute only speaker-switch pairs**
+   - Consecutive turns by the same speaker are not scored
+   - rLSM is computed only for adjacent pairs where the speaker changes
 
-3. **応答側（後手）への帰属**
-   - rLSMスコアが応答者（発話の後手）に正しく帰属されること
-   - 個人別集計で応答側のスコアのみが集計されること
+3. **Attribution to the responder (later turn)**
+   - rLSM scores are attributed to the responder (the later turn in the pair)
+   - Individual aggregation collects only the responder-attributed scores
 
-4. **階層的集計の正確性**
-   - 個人×カテゴリ平均が正しく計算されること
-   - ダイアド×カテゴリ平均（両話者の平均）が正しく算出されること
-   - 最終ダイアドスコア（カテゴリ等重み平均）が正しく計算されること
+4. **Correct hierarchical aggregation**
+   - Individual x category means are computed correctly
+   - Dyad x category means (average over both speakers) are computed correctly
+   - Final dyad score (equal-weight mean over categories) is computed correctly
 
-5. **単一話者・データ不足時の処理**
-   - 1人しか話者がいない場合にNaNを返すこと
-   - カテゴリ平均でのNaN無視処理が正しく動作すること
+5. **Edge cases: single speaker / insufficient data**
+   - Returns NaN when only one speaker is present
+   - NaN-handling in category averaging behaves as intended
 """
 
 import math
 import numpy as np
 import pytest
 
-# テスト対象
+# Test target
 from rlsm.core import (
     rlsm_per_category_from_rates,
     compute_pair_category_rlsm,
@@ -44,62 +44,62 @@ from rlsm.core import (
     EPS,
 )
 
-CATS = ["ppron", "ipron"]  # 最小2カテゴリで検証（実際は7カテゴリを渡せばOK）
+CATS = ["ppron", "ipron"]  # Validate with the minimal 2 categories (in practice, passing 7 categories is OK)
 
 
 # ==============
-# Table 5 の欠損規則（1往復レベル）
+# Table 5 missingness rules (single-exchange level)
 # ==============
 def test_table5_case_both_zero_is_nan():
     prev = {"ppron": 0.0, "ipron": 3.0}
     curr = {"ppron": 0.0, "ipron": 3.0}
     out = rlsm_per_category_from_rates(prev, curr, CATS)
-    assert math.isnan(out["ppron"]), "前=0,今=0 は NaN（除外）"
-    # ipron は計算される（後のケースで別途検証）
+    assert math.isnan(out["ppron"]), "prev=0 and curr=0 should be NaN (excluded)"
+    # ipron is computed (validated separately in a later case)
 
 
 def test_table5_case_prev_zero_curr_positive_is_nan():
     prev = {"ppron": 0.0}
     curr = {"ppron": 5.0}
     out = rlsm_per_category_from_rates(prev, curr, ["ppron"])
-    assert math.isnan(out["ppron"]), "前=0,今>0 も NaN（除外）"
+    assert math.isnan(out["ppron"]), "prev=0 and curr>0 should also be NaN (excluded)"
 
 
 def test_table5_case_prev_positive_curr_zero_is_low_value():
     prev = {"ppron": 10.0}
     curr = {"ppron": 0.0}
     out = rlsm_per_category_from_rates(prev, curr, ["ppron"])
-    # 期待値: 1 - 10/(10+0+EPS) = 1 - 10/10.0001 ≈ 1e-5
+    # Expected: 1 - 10/(10+0+EPS) = 1 - 10/10.0001 ≈ 1e-5
     expected = 1.0 - (10.0 / (10.0 + EPS))
     assert out["ppron"] == pytest.approx(expected, rel=1e-9, abs=1e-12)
 
 
 # ==============
-# 話者交代ペアのみ計算 & 応答側（後手）への帰属
+# Compute only speaker-switch pairs & attribute to the responder (the later turn)
 # ==============
 def test_only_speaker_changes_are_counted_and_scores_belong_to_responder():
     turns = [
         {"speaker": "A", "rates": {"ppron": 10.0, "ipron": 0.0}},
-        {"speaker": "A", "rates": {"ppron": 9.0,  "ipron": 0.0}},  # 同一話者→スキップ
-        {"speaker": "B", "rates": {"ppron": 10.0, "ipron": 5.0}},  # ← ここで交代(A→B)
-        {"speaker": "A", "rates": {"ppron": 0.0,  "ipron": 5.0}},  # ← ここで交代(B→A)
+        {"speaker": "A", "rates": {"ppron": 9.0,  "ipron": 0.0}},  # Same speaker -> skip
+        {"speaker": "B", "rates": {"ppron": 10.0, "ipron": 5.0}},  # ← speaker switch happens here (A→B)
+        {"speaker": "A", "rates": {"ppron": 0.0,  "ipron": 5.0}},  # ← speaker switch happens here (B→A)
     ]
     pair_scores = compute_pair_category_rlsm(turns, CATS)
 
-    # 交代は2回だけ
+    # Only 2 switches
     assert len(pair_scores) == 2
 
-    # 1つめの交代(A→B)：応答はB
+    # First switch (A→B): responder is B
     assert pair_scores[0]["leader"] == "A"
     assert pair_scores[0]["responder"] == "B"
 
-    # 2つめの交代(B→A)：応答はA
+    # Second switch (B→A): responder is A
     assert pair_scores[1]["leader"] == "B"
     assert pair_scores[1]["responder"] == "A"
 
 
 def test_individual_category_means_are_for_responder_only():
-    # 例をシンプルに、数値を厳密に追えるように設定
+    # Keep the example simple so we can track values precisely
     turns = [
         {"speaker": "A", "rates": {"ppron": 10.0, "ipron": 0.0}},   # lead
         {"speaker": "B", "rates": {"ppron": 10.0, "ipron": 5.0}},   # respond(B)
@@ -108,48 +108,48 @@ def test_individual_category_means_are_for_responder_only():
     pair_scores = compute_pair_category_rlsm(turns, CATS)
     indiv = aggregate_individual_category_means(pair_scores, CATS)
 
-    # Bのppronは1.0（10 vs 10）
+    # B's ppron is 1.0 (10 vs 10)
     assert indiv["B"]["ppron"] == pytest.approx(1.0)
 
-    # Bのipronは前=0,今=5 → NaN（応答側Bには入らない）
+    # B's ipron has prev=0, curr=5 -> NaN (not included for responder B)
     assert math.isnan(indiv["B"]["ipron"])
 
-    # Aのppronは前=10,今=0 → 低値（約1e-5）
+    # A's ppron has prev=10, curr=0 -> small value (~1e-5)
     expected_ppron_A = 1.0 - (10.0 / (10.0 + EPS))
     assert indiv["A"]["ppron"] == pytest.approx(expected_ppron_A, rel=1e-9, abs=1e-12)
 
-    # Aのipronは5 vs 5 → 1.0
+    # A's ipron is 5 vs 5 -> 1.0
     assert indiv["A"]["ipron"] == pytest.approx(1.0)
 
 
 # ==============
-# カテゴリ別ダイアド → 最終ダイアド（カテゴリ平均）
+# Category-level dyad -> final dyad (mean over categories)
 # ==============
 def test_dyad_category_and_final_under_bilateral_only():
-    # 上のケースの続き（A/Bそれぞれ1回ずつ応答）
+    # Continuation of the case above (A/B each responds once)
     turns = [
         {"speaker": "A", "rates": {"ppron": 10.0, "ipron": 0.0}},
-        {"speaker": "B", "rates": {"ppron": 10.0, "ipron": 5.0}},  # Bにppron=1.0, ipron=NaN
-        {"speaker": "A", "rates": {"ppron": 0.0,  "ipron": 5.0}},  # Aにppron≈1e-5, ipron=1.0
+        {"speaker": "B", "rates": {"ppron": 10.0, "ipron": 5.0}},  # For B: ppron=1.0, ipron=NaN
+        {"speaker": "A", "rates": {"ppron": 0.0,  "ipron": 5.0}},  # For A: ppron≈1e-5, ipron=1.0
     ]
     res = compute_rlsm_core(turns, CATS, na_policy="bilateral_only")
     indiv = res["individual_category_means"]
     dyad_cat = res["dyad_category_means"]
     final = res["dyad_final"]
 
-    # カテゴリ別ダイアド:
+    # Dyad by category:
     # ppron = mean( B=1.0, A≈1e-5 ) ≈ 0.500005
     expected_ppron_A = 1.0 - (10.0 / (10.0 + EPS))
     expected_dyad_ppron = (1.0 + expected_ppron_A) / 2.0
     assert dyad_cat["ppron"] == pytest.approx(expected_dyad_ppron, rel=1e-9, abs=1e-12)
 
-    # ipron: BがNaN, Aが1.0 → bilateral_onlyではNaN
+    # ipron: B is NaN, A is 1.0 -> bilateral_only => NaN
     assert math.isnan(dyad_cat["ipron"])
 
-    # 最終：カテゴリ平均（有効カテゴリのみ= ppronのみ）
+    # Final: mean over valid categories only (= ppron only)
     assert final == pytest.approx(expected_dyad_ppron, rel=1e-9, abs=1e-12)
 
-    # 個人総合（派生）：個人×カテゴリ平均のカテゴリ平均
+    # Individual overall (derived): mean of (individual x category means) over categories
     # A: mean( ppron≈1e-5, ipron=1.0 ) ≈ 0.500005
     expected_A_overall = np.nanmean([expected_ppron_A, 1.0])
     assert res["individual_overall"]["A"] == pytest.approx(expected_A_overall, rel=1e-9, abs=1e-12)
@@ -167,21 +167,21 @@ def test_dyad_category_and_final_under_nanmean():
     dyad_cat = res["dyad_category_means"]
     final = res["dyad_final"]
 
-    # ppron は上と同じ
+    # ppron is the same as above
     expected_ppron_A = 1.0 - (10.0 / (10.0 + EPS))
     expected_dyad_ppron = (1.0 + expected_ppron_A) / 2.0
     assert dyad_cat["ppron"] == pytest.approx(expected_dyad_ppron, rel=1e-9, abs=1e-12)
 
-    # ipron: nanmean では mean(1.0, NaN) = 1.0
+    # ipron: with nanmean, mean(1.0, NaN) = 1.0
     assert dyad_cat["ipron"] == pytest.approx(1.0)
 
-    # 最終は 2カテゴリの平均 → (0.500005.. + 1.0)/2 ≈ 0.750005..
+    # Final is the average over 2 categories -> (0.500005.. + 1.0)/2 ≈ 0.750005..
     expected_final = np.nanmean([expected_dyad_ppron, 1.0])
     assert final == pytest.approx(expected_final, rel=1e-9, abs=1e-12)
 
 
 # ==============
-# 片方しか話者がいない場合
+# When only one speaker is present
 # ==============
 def test_single_speaker_returns_nans():
     turns = [
@@ -197,7 +197,7 @@ def test_single_speaker_returns_nans():
 
 
 # ==============
-# mean_over_categories の基本性質
+# Basic properties of mean_over_categories
 # ==============
 def test_mean_over_categories_ignores_nans():
     vals = {"ppron": 1.0, "ipron": np.nan}

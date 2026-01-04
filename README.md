@@ -125,13 +125,6 @@ Once inside the container, run tests to verify everything works:
 pytest -v  # Should show 31 passed tests
 ```
 
-**Troubleshooting:**
-
-- **Container build fails:** Ensure Docker Desktop is running and you have sufficient disk space (~2GB)
-- **Can't find Docker:** Make sure Docker Desktop is installed and running
-- **Build takes too long:** The first build compiles some packages (especially on ARM64/M1/M2 Macs), subsequent builds use cache and are much faster
-- **Permission errors:** The container runs as user `vscode` to avoid permission issues
-
 **Alternative: Using Docker CLI directly**
 If you prefer not to use VS Code, you can use Docker directly:
 
